@@ -1,0 +1,26 @@
+import sqlite3
+from sqlite3 import Error
+
+def create_connection(db_file):
+    """
+    Create a database connection to a SQLite database specified by the db_file
+    
+    Args:
+    db_file (str): Path to the SQLite database file
+    
+    Returns:
+    sqlite3.Connection: SQLite connection object if successful, None otherwise
+    """
+    conn = None
+    try:
+        conn = sqlite3.connect(db_file)
+        print(f"Successfully connected to {db_file}")
+    except Error as e:
+        print(f"Error connecting to database: {e}")
+    return conn
+
+# Example usage
+db_path = 'path_to_your_database.db'  # Specify the path to your database file
+conn = create_connection(db_path)
+
+# You can now use `conn` to perform database operations

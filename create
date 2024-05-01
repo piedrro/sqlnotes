@@ -1,0 +1,70 @@
+import sqlite3
+
+# Sample data: lists of dictionaries
+employees = [
+    {'id': 1, 'name': 'Alice', 'role': 'Engineer'},
+    {'id': 2, 'name': 'Bob', 'role': 'Manager'}
+]
+
+products = [
+    {'id': 100, 'name': 'Gadget', 'price': 19.99},
+    {'id': 101, 'name': 'Widget', 'price': 29.99}
+]
+
+orders = [
+    {'id': 500, 'product_id': 100, 'quantity': 2},
+    {'id': 501, 'product_id': 101, 'quantity': 1}
+]
+
+# Connect to SQLite Database
+conn = sqlite3.connect('company.db')
+c = conn.cursor()
+
+# Create Tables
+c.execute('''
+    CREATE TABLE IF NOT EXISTS employees (
+        id INTEGER PRIMARY KEY,
+        name TEXT,
+        role TEXT
+    )
+''')
+
+c.execute('''
+    CREATE TABLE IF NOT EXISTS products (
+        id INTEGER PRIMARY KEY,
+        name TEXT,
+        price REAL
+    )
+''')
+
+c.execute('''
+    CREATE TABLE IF NOT EXISTS orders (
+        id INTEGER PRIMARY KEY,
+        product_id INTEGER,
+        quantity INTEGER,
+        FOREIGN KEY(product_id) REFERENCES products(id)
+    )
+''')
+
+# Function to insert data
+def insert_data(table_name, data):
+    columns = ', '.join(data[0].keys())
+    placeholders = ':'+', :'.join(data[0].keys())
+    query = f'INSERT INTO {table_name} ({columns}) VALUES ({placeholders})'
+    c.executemany(query, data)
+    conn.commit()
+
+# Insert data into tables
+insert_data('employees', employees)
+insert_data('products', products)
+insert_data('orders', orders)
+
+# Closing the connection
+conn.close()
+
+
+#     Database Connection: sqlite3.connect('company.db') connects to (or creates if it doesn't exist) a database named company.db.
+#     Table Creation: CREATE TABLE IF NOT EXISTS ensures that the table is only created if it doesn't already exist.
+#     Data Insertion: The insert_data function uses the executemany method to insert multiple entries at once. It constructs an SQL query using the dictionary keys as column names and dictionary values as row values.
+
+# Before running the script, ensure that your data structure matches the one used in the table schema (e.g., types and keys). This code can be adjusted based on your actual data and requirements.

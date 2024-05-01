@@ -1,0 +1,38 @@
+def infer_sql_schema(data):
+    """
+    Infers the SQL column definitions from the first element of a list of dictionaries.
+    
+    Args:
+    data (list of dict): The data from which to infer the schema.
+    
+    Returns:
+    str: A string containing the SQL CREATE TABLE columns.
+    """
+    if not data:
+        return "The list is empty."
+    
+    first_item = data[0]
+    columns = []
+    
+    # Mapping Python types to SQL types
+    type_map = {
+        int: 'INTEGER',
+        float: 'REAL',
+        str: 'TEXT',
+        bool: 'BOOLEAN'
+    }
+    
+    for key, value in first_item.items():
+        sql_type = type_map.get(type(value), 'TEXT')
+        columns.append(f"{key} {sql_type}")
+    
+    return ', '.join(columns)
+
+# Example usage
+employees = [
+    {'id': 1, 'name': 'Alice', 'role': 'Engineer', 'part_time': False},
+    {'id': 2, 'name': 'Bob', 'role': 'Manager', 'part_time': True}
+]
+
+schema = infer_sql_schema(employees)
+print(schema)  # Output will be the SQL column definitions
