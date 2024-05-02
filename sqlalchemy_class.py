@@ -1,6 +1,7 @@
 from sqlalchemy import create_engine, Table, Column, Integer, MetaData, String, select, insert
 from sqlalchemy.orm import declarative_base, sessionmaker
 from sqlalchemy.exc import SQLAlchemyError
+# https://towardsdatascience.com/sqlalchemy-python-tutorial-79a577141a91
 
 Base = declarative_base()
 
