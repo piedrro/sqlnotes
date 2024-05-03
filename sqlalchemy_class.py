@@ -1,6 +1,7 @@
 from sqlalchemy import create_engine, Table, Column, Integer, MetaData, String, select, insert
 from sqlalchemy.orm import declarative_base, sessionmaker
 from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy import inspect, update, and_
 # https://towardsdatascience.com/sqlalchemy-python-tutorial-79a577141a91
 
 Base = declarative_base()
@@ -13,6 +14,26 @@ class SQLiteWrapper:
         self.Session = sessionmaker(bind=self.engine)
         self.metadata = MetaData(self.engine)
         self.tables = {}
+        self.reflect_tables()
+
+    def reflect_tables(self):
+        """ Reflects the tables from the database into the metadata and stores them in self.tables. """
+        try:
+            self.metadata.reflect(self.engine)
+            self.tables = {table_name: table for table_name, table in self.metadata.tables.items()}
+            print("Tables loaded:", self.tables.keys())
+        except SQLAlchemyError as e:
+            print("Failed to reflect tables:", e)
+
+    def get_table(self, table_name):
+        """ Check if a table exists in the database and return it, otherwise return None."""
+    
+        inspector = inspect(self.engine)
+        if table_name in inspector.get_table_names():
+            return self.tables.get(table_name)
+        else:
+            return None
+
 
     def create_table_from_dict(self, table_name, data_dict):
         """ Automatically create a table based on the dictionary keys and inferred types using SQLAlchemy. """
@@ -87,6 +108,32 @@ class SQLiteWrapper:
         """ Close the database connection if needed. """
         # With SQLAlchemy, connections are typically managed as context-managers, so explicit closes are often unnecessary.
 
+    def update_row(self, table_name, identifiers, new_data):
+        """
+        Update specific columns of a row in the specified table.
+        
+        Args:
+        table_name (str): The name of the table.
+        identifiers (dict): Dictionary with column names and values to identify the row.
+        new_data (dict): Dictionary with column names and values to update.
+        """
+        table = self.tables.get(table_name)
+        if not table:
+            raise ValueError(f"Table {table_name} does not exist.")
+        
+        # Build the WHERE clause based on identifiers
+        conditions = [table.c[key] == value for key, value in identifiers.items()]
+        condition = and_(*conditions)  # Combine all conditions with AND
+
+        # Build the update statement
+        update_stmt = update(table).where(condition).values(**new_data)
+        
+        with self.engine.begin() as conn:  # Use a transaction
+            result = conn.execute(update_stmt)
+            print(f"Updated {result.rowcount} rows in {table_name}")
+
+
+
 # Example usage of the class
 db = SQLiteWrapper('mydatabase.db')
 example_data = {
@@ -99,3 +146,9 @@ db.create_table_from_dict('projects', example_data)
 db.add_dict_row('projects', example_data)
 data = db.fetch_data('projects')
 print(data)
+
+
+db = SQLiteWrapper('mydatabase.db')
+identifiers = {'id': 1}  # Single ID for simplicity
+new_data = {'name': 'Updated Project', 'budget': 200000}
+db.update_row('projects', identifiers, new_data)
